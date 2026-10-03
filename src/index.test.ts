@@ -2434,6 +2434,30 @@ describe("parseMessage", () => {
     ]);
   });
 
+  it.each([
+    undefined,
+    "invalid-date",
+    new Date(Number.NaN),
+  ])("keeps a reply serializable with an absent or invalid target timestamp (%s)", (timestamp) => {
+    const adapter = cloudAdapter();
+    const space = makeSpace("iMessage;-;+1234567890");
+    const target = {
+      ...makeMessage("original-1", space, {
+        type: "text",
+        text: "Should I use blue?",
+      }),
+      timestamp,
+    };
+    const raw = makeMessage("answer-1", space, {
+      type: "reply",
+      target,
+      content: { type: "text", text: "yes" },
+    });
+    const message = adapter.parseMessage(raw);
+    expect(message.replyTo?.metadata.dateSent).toEqual(raw.timestamp);
+    expect(() => message.toJSON()).not.toThrow();
+  });
+
   it("does not recurse through a target's own reply references", () => {
     const adapter = cloudAdapter();
     const space = makeSpace("iMessage;-;+1234567890");

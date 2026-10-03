@@ -74,6 +74,10 @@ function extractReplyTo(fields: InboundMessageFields): Message | undefined {
   if (!(target?.id && target.content)) {
     return;
   }
+  const timestamp =
+    typeof target.timestamp === "string"
+      ? new Date(target.timestamp)
+      : target.timestamp;
 
   return buildChatMessageFromFields(
     {
@@ -84,9 +88,9 @@ function extractReplyTo(fields: InboundMessageFields): Message | undefined {
       senderId: target.sender?.id ?? "",
       isOutbound: target.direction === "outbound",
       timestamp:
-        typeof target.timestamp === "string"
-          ? new Date(target.timestamp)
-          : (target.timestamp ?? fields.timestamp),
+        timestamp && Number.isFinite(timestamp.getTime())
+          ? timestamp
+          : fields.timestamp,
       raw: target,
     },
     // Keep only the immediate target, including when provider references cycle.
